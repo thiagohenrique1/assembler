@@ -22,7 +22,7 @@ struct instr {
 };
 
 template <int bit_size>
-string get_imm(std::stringstream& line_ss, bool allow_signed, label_hash& labels);
+string get_imm(std::stringstream &line_ss, label_hash &labels);
 string get_reg_addr(std::stringstream& line_ss);
 std::optional<instr> get_opcode(string& instr_name, vector<instr> instr_list);
 std::vector<instr> get_instr_list();
@@ -64,17 +64,17 @@ int main() {
 						rb = get_reg_addr(ss);
 					string imm3 = "00000";
 					if(instr_name != "br" && instr_name != "cmp") {
-						imm3 = get_imm<5>(ss, false, labels);
+						imm3 = get_imm<5>(ss, labels);
 					}
 					bin << imm3 << rb << ra;
 					break;
 				} case 3: {
 					string ra = get_reg_addr(ss);
-					string imm2 = get_imm<8>(ss, false, labels);
+					string imm2 = get_imm<8>(ss, labels);
 					bin << imm2 << ra;
 					break;
 				} case 4: {
-					string imm1 = get_imm<11>(ss, false, labels);
+					string imm1 = get_imm<11>(ss, labels);
 					bin << imm1;
 					break;
 				} default: break;
@@ -106,7 +106,7 @@ int main() {
 }
 
 template <int bit_size>
-string get_imm(std::stringstream& line_ss, bool allow_signed, label_hash& labels) {
+string get_imm(std::stringstream &line_ss, label_hash &labels) {
 	uint16_t imm_int;
 	string imm;
 	line_ss >> imm;
@@ -116,8 +116,6 @@ string get_imm(std::stringstream& line_ss, bool allow_signed, label_hash& labels
 	} else {
 		imm_int = uint16_t(std::stoi(imm));
 		double max = std::exp2(bit_size) - 1;
-		if(allow_signed)
-			max = std::exp2(bit_size - 1) - 1;
 		if(std::abs(std::stoi(imm)) > max)
 			std::cout << "abs(imm) is bigger than maxsize (" << max << ")" << std::endl;
 	}
