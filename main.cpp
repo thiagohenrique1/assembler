@@ -29,7 +29,7 @@ std::vector<instr> get_instr_list();
 std::tuple<instr_text, label_hash, int> preprocess(std::ifstream &file);
 
 int main() {
-//	Serial serial("/dev/ttyUSB0");
+	Serial serial("/dev/ttyUSB0");
 	std::ofstream verilog("/home/thiago/Workspace/CPU/instructions.v");
 	std::ofstream instructions_bin("/home/thiago/Workspace/CPU/instructions.txt");
 	int addr = 0;
@@ -100,6 +100,7 @@ int main() {
 			break;
 		}
 	}
+	serial.send_byte(0x48);
 //	int rec = serial.receive();
 //	std::cout << std::to_string(rec) << std::endl;
 	return 0;

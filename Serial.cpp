@@ -18,6 +18,10 @@ void Serial::send(uint16_t data) {
 	write(fd, &upper, 1);
 }
 
+void Serial::send_byte(uint8_t byte) {
+	write(fd, &byte, 1);
+}
+
 uint8_t Serial::receive() {
 	uint8_t buff;
 	read(fd, &buff, 1);

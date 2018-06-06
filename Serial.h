@@ -12,6 +12,7 @@ class Serial {
 		explicit Serial(const std::string &port);
 		void send(uint16_t data);
 		void send(std::bitset<16> data);
+		void send_byte(uint8_t byte);
 		uint8_t receive();
 };
 
