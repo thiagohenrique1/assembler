@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <iomanip>
 #include "Serial.h"
+#include "unistd.h"
 
 using std::string;
 using std::vector;
@@ -21,6 +22,15 @@ struct instr {
 	int type;
 };
 
+//#define set_bootloader
+
+#ifdef set_bootloader
+	#define default_addr 0
+#else
+	#define default_addr 0x21
+//#define default_addr 0x0
+#endif
+
 template <int bit_size>
 string get_imm(std::stringstream &line_ss, label_hash &labels);
 string get_reg_addr(std::stringstream& line_ss);
@@ -30,13 +40,19 @@ std::tuple<instr_text, label_hash, int> preprocess(std::ifstream &file);
 
 int main() {
 	Serial serial("/dev/ttyUSB0");
-	std::ofstream verilog("/home/thiago/Workspace/CPU/instructions.v");
+	#ifdef set_bootloader
 	std::ofstream instructions_bin("/home/thiago/Workspace/CPU/instructions.txt");
-	int addr = 0;
+	#else
+	std::ofstream instructions_bin("instructions.txt");
+	#endif
+	int addr = default_addr;
 
 	auto instr_list = get_instr_list();
-	std::ifstream file("prog.asm");
+	std::ifstream file("test.asm");
 	auto [instructions, labels, instr_count] = preprocess(file);
+
+	serial.send(static_cast<uint16_t>(instr_count));
+
 	file.close();
 
 	for(auto& [line, original_line] : instructions) {
@@ -88,19 +104,15 @@ int main() {
 			uint16_t binary = uint16_t(std::bitset<16>(bin.str()).to_ulong());
 			std::cout << " - Hex: 0x" << std::setw(4) <<std::setfill('0')
 					  << std::uppercase << std::hex << binary;
-			std::cout << " - Addr: " << addr << std::endl;
+			std::cout << " - Addr: " << addr++ << std::endl;
 
-//			Write to verilog file
-			verilog << "memory_data[" << addr++ << "] = 16'b";
-			verilog << bin.str() << ";" << std::endl;
-
-//			serial.send(std::bitset<16>(bin.str()));
+			serial.send(std::bitset<16>(bin.str()));
 		} else {
 			std::cout << "Invalid instruction" << std::endl;
 			break;
 		}
 	}
-	serial.send_byte(0x48);
+//	serial.send(0x1234);
 //	int rec = serial.receive();
 //	std::cout << std::to_string(rec) << std::endl;
 	return 0;
@@ -190,7 +202,7 @@ std::tuple<instr_text, label_hash, int> preprocess(std::ifstream &file) {
 	instr_text instructions;
 	label_hash labels;
 	std::string line;
-	uint16_t addr = 0;
+	uint16_t addr = default_addr;
 	while(std::getline(file, line)) {
 		if(size_t pos = line.find(':'); pos != string::npos) {
 			labels[line.substr(0, pos)] = addr;
@@ -201,5 +213,5 @@ std::tuple<instr_text, label_hash, int> preprocess(std::ifstream &file) {
 			addr++;
 		}
 	}
-	return {instructions, labels, addr};
+	return {instructions, labels, addr - default_addr};
 }
